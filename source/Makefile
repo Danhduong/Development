@@ -1,10 +1,14 @@
 
 all:
-	@echo "Compiling log folder"
-	cd log; make all
+	@echo "Compiling common folder"
+	cd common; make all
 
 clean:
-	@echo "Cleanning log folder"
-	cd log; make clean 
+	@echo "Cleanning common folder"
+	cd common; make clean 
 
 install: all
+	@echo "Compiling netserver folder"
+	cd netserver; make install
+	@echo "Compiling netclient folder"
+	cd netclient; make install

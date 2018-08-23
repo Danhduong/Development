@@ -1,6 +1,5 @@
-#ifndef _BASELOGGER_H_
-#define _BASELOGGER_H_
-
+#ifndef LOG_H
+#define LOG_H
 #include <iostream>
 
 extern "C"
@@ -60,4 +59,17 @@ class BaseLogger
         static char m_CurrentTime[512];
 };
 
-#endif
+#define MAX_FILE_NAME_LENGTH 255
+#define LOG_PATH "./log/"
+class FileLogger : public BaseLogger
+{
+    public :
+        FileLogger(void);
+        ~FileLogger(void);
+        void Log(LOG_LEVEL level, const char * strMsg, const char * file, const unsigned long line, const char * function);
+
+    private :
+        void _WriteLogToFile(const char * strMsg, const char * filename);
+};
+
+#endif /* LOG_H */

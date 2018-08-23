@@ -1,37 +1,34 @@
 #include "common.h"
-#include <iostream>
-#include <sstream>
-#include <cstdint>
-#include <cstring>
+#include "log.h"
+#include "socket.h"
+#include <signal.h>
 
-int main(int argc, char* argv[])
+Client tcp;
+
+void sig_exit(int s)
 {
-    if (argc != 3)
-    {
-        std::cerr << "Usage: client <host> <Message>\n";
-        exit(1);
-    }
+	tcp.exit();
+    cout << "The program is exited with <" << s << "> signal" << endl;
+	exit(0);
+}
 
-    try
-    {
-        Client  client(argv[1]);
+int main(int argc, char *argv[])
+{
+	signal(SIGINT, sig_exit);
 
-        if (!client.sendMessage(argv[2]))
-        {
-            std::stringstream message("Failed: sendMessage()\n");
-            message << strerror(errno);
-            throw std::runtime_error(message.str());
-        }
+    cout << "Starting Client..." << endl;
+	tcp.setup(argv[1], atoi(argv[2]));
 
-        std::string     buffer;
-        if (client.getMessage(buffer))
-        {
-            std::cout << "Response from server: " << buffer << "\n";
-        }
-    }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Exception: " << e.what() << "\n";
-        throw;
-    }
+	while(1)
+	{
+        cout << "Sending ..." << endl;
+		tcp.Send("Danh Duong");
+		string rec = tcp.receive(MAX_PACKET_SIZE);
+		if(rec != "")
+		{
+			cout << "Server Response:" << rec << endl;
+		}
+		sleep(1);
+	}
+	return 0;
 }

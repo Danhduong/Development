@@ -1,38 +1,42 @@
 #include "common.h"
-#include <iostream>
-#include <sstream>
-#include <cstdint>
-#include <cstring>
+#include "log.h"
+#include "socket.h"
+#include <signal.h>
 
-int main()
+Server tcp;
+
+void sig_exit(int s)
 {
-    static std::string okMsg    = "OK";
-    static std::string errorMsg = "ERROR";
-    try
-    {
-        Server  server;
-        int finished    = 0;
-        while(!finished)
-        {
-            Socket connection = server.accept();
+    cout << "The program is exited with <" << s << "> signal" << endl;
+	exit(0);
+}
 
-            std::string buffer;
-            bool    ok = false;
-            if (connection.getMessage(buffer))
-            {
-                std::cout << buffer << "\n" << "Message Complete\n";
-                ok = true;
-            }
+void *loop(void * m)
+{
+    pthread_detach(pthread_self());
+	while(1)
+	{
+		srand(time(NULL));
+		char ch = 'a' + rand() % 26;
+		string s(1,ch);
+		string str = tcp.getMessage();
+		if( str != "" )
+		{
+			cout << "Message:" << str << endl;
+			tcp.Send(" [client message: "+str+"] "+s);
+			tcp.clean();
+		}
+		usleep(1000);
+	}
+	tcp.detach();
+}
 
-            if (!connection.sendMessage(ok ? okMsg : errorMsg))
-            {
-                std::cerr << "Send Message Failed\n" << strerror(errno) << "\n";
-            }
-        }
-    }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Exception: " << e.what() << "\n";
-        throw;
-    }
+int main(int argc, char *argv[])
+{
+    cout << "Starting ... "<< endl;
+    signal(SIGINT, sig_exit);
+	tcp.setup(argv[1], atoi(argv[2]));
+    tcp.receive();
+
+	return 0;
 }
