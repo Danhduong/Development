@@ -35,7 +35,7 @@ class Server
         void clean();
 
 	private:
-        static void * Task(void * argv);
+        static void *Task(void * argv);
 };
 
 class Client
@@ -50,7 +50,7 @@ class Client
         Client();
         bool setup(string address, int port);
         bool Send(string data);
-        string receive(int size = 4096);
+        bool Receive();
         string read();
         void exit();
 };

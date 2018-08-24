@@ -15,20 +15,13 @@ void sig_exit(int s)
 int main(int argc, char *argv[])
 {
 	signal(SIGINT, sig_exit);
-
-    cout << "Starting Client..." << endl;
 	tcp.setup(argv[1], atoi(argv[2]));
 
 	while(1)
 	{
-        cout << "Sending ..." << endl;
 		tcp.Send("Danh Duong");
-		string rec = tcp.receive(MAX_PACKET_SIZE);
-		if(rec != "")
-		{
-			cout << "Server Response:" << rec << endl;
-		}
-		sleep(1);
+		tcp.Receive();
+        sleep(1); /* second unit */
 	}
 	return 0;
 }

@@ -6,24 +6,23 @@ string Server::Message;
 void* Server::Task(void *arg)
 {
 	int size = 0;
-	int newsockfd = (long) arg;
 	char msg[MAX_PACKET_SIZE];
+    int fd = (long)arg;
 	pthread_detach(pthread_self());
-    
-    cout << "Starting to receive message" << endl;
+
+    cout << "Reading on [" << fd << "] socket" << endl;
 	while(1)
 	{
-		if((size = recv(newsockfd, msg, MAX_PACKET_SIZE, 0)) <= 0)
+		if((size = recv(fd, msg, MAX_PACKET_SIZE, 0)) > 0)
         {
-		   close(newsockfd);
-		   break;
+            msg[size] = 0;
+            Message = string(msg);
+            cout << "[" << fd << "] Message = [" << Message << "]" << endl;
+            send(fd, "OK", strlen("OK"), 0);
 		}
-		msg[size] = 0;
-		Message = string(msg);
-        cout << "Sever : Recieving <" << msg << ">" << endl;
     }
-
-	return 0;
+    pthread_exit(NULL);
+	return NULL;
 }
 
 void Server::setup(string address, int port)
@@ -50,12 +49,20 @@ void Server::setup(string address, int port)
 string Server::receive()
 {
 	string str;
+    int port = 0;
+    
 	while(1)
 	{
 		socklen_t sosize  = sizeof(clientAddress);
 		newsockfd = accept(sockfd,(struct sockaddr*)&clientAddress, &sosize);
 		str = inet_ntoa(clientAddress.sin_addr);
-		pthread_create(&serverThread, NULL, &Task, &newsockfd);
+        port = ntohs(clientAddress.sin_port);
+        cout << "[" << newsockfd << "] Client is [" << str << ":" << port << "]" << endl;
+		if(pthread_create(&serverThread, NULL, &Task, (void *)newsockfd) != 0)
+        {
+            cout << "Cannot create thread...";
+            return NULL;
+        }
 	}
 	return str;
 }
@@ -111,30 +118,28 @@ bool Client::setup(string address , int port)
 
 bool Client::Send(string data)
 {
-    cout << "Send <" << data << ">" << endl;
-    if(send(sock , data.c_str() , strlen( data.c_str() ) , 0) < 0)
+    cout << "Sending <" << data << ">" << endl;
+    if(send(sock, data.c_str(), strlen(data.c_str()), 0) < 0)
     {
         cout << "Send failed : " << data << endl;
         return false;
     }
-
 	return true;
 }
 
-string Client::receive(int size)
+bool Client::Receive()
 {
-  	char buffer[size];
+  	char buffer[MAX_PACKET_SIZE];
+
 	memset(&buffer[0], 0, sizeof(buffer));
 
-  	string reply;
-	if(recv(sock , buffer , size, 0) < 0)
+	if(recv(sock , buffer , MAX_PACKET_SIZE, 0) > 0)
   	{
-	    cout << "receive failed!" << endl;
-		return nullptr;
+        buffer[strlen(buffer)] = '\0';
+        cout << "Server response : [" << buffer << "]" << endl;
+        return true;
   	}
-	buffer[size-1]='\0';
-  	reply = buffer;
-  	return reply;
+	return false;
 }
 
 string Client::read()
